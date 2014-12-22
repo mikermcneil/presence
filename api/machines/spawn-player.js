@@ -5,11 +5,13 @@ module.exports = {
   inputs: {
     name: {
       description: 'The unique name of the player to create',
-      example: 'Guest_3294'
+      example: 'Guest_3294',
+      required: true
     },
     world: {
       description: 'Id of the world where the player should be spawned',
-      example: 23
+      example: 23,
+      required: true
     }
   },
 
@@ -32,7 +34,7 @@ module.exports = {
 
   defaultExit: 'then',
 
-  fn: function createMap(inputs, exits){
+  fn: function (inputs, exits){
 
     var WORLD_WIDTH = sails.config.world.width;
     var WORLD_HEIGHT = sails.config.world.height;
@@ -55,7 +57,18 @@ module.exports = {
 
       // Publish an event letting everyone who cares that a new player was created.
       // (if we didn't want to publish it to ourselves, we could have passed in `req`)
-      Player.publishCreate(newPlayer);
+      // World.publishAdd(inputs.world, 'players');
+      World.message(inputs.world, {
+        id: inputs.world,
+        verb: 'addedTo',
+        attribute: 'players',
+        added: newPlayer
+      });
+
+      // TODO:
+      // consider figuring out a way to have the other folks
+      // who are subscribed to this world also subscribe to
+      // the new player
 
       return exits.then(newPlayer);
     });

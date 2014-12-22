@@ -13,6 +13,11 @@ module.exports = {
     name: {
       type: 'string',
       unique: true
+    },
+
+    players: {
+      collection: 'Player',
+      via: 'world'
     }
 
   }
