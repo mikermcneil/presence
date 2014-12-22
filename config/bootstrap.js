@@ -11,7 +11,19 @@
 
 module.exports.bootstrap = function(cb) {
 
-  // It's very important to trigger this callback method when you are finished
-  // with the bootstrap!  (otherwise your server will never lift, since it's waiting on the bootstrap)
-  cb();
+  World.findOrCreate({
+    name: 'default'
+  }, {
+    name: 'default'
+  }).exec(function (err){
+    if (err) {
+      sails.log.error('failed to create initial `default` world.');
+      return cb(err);
+    }
+
+    // It's very important to trigger this callback method when you are finished
+    // with the bootstrap!  (otherwise your server will never lift, since it's waiting on the bootstrap)
+    cb();
+  });
+
 };

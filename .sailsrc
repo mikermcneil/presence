@@ -1,4 +1,9 @@
 {
+  "world":{
+    "width": 800,
+    "height": 600
+  },
+
   "generators": {
     "modules": {}
   }

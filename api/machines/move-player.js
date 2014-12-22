@@ -1,6 +1,6 @@
 module.exports = {
-
-  description: 'Move a player',
+  friendlyName: 'Move player',
+  description: 'Move a player in a direction',
 
   inputs: {
     playerId: {

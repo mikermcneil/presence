@@ -237,72 +237,83 @@ angular.module('Presence').controller('WorldCtrl', [
 
   // -------------------- //
   //                      //
-  //      FETCH DATA      //
+  //    INITIAL FETCH     //
   //                      //
   // -------------------- //---------------------------------------------
 
 
-  // Initial fetch to get players
-  // (only get ones who've been updated recently)
+
+  // First get the default world...
+  // (this also subscribes to subsequent updates)
   //
-  // (also subscribes to subsequent updates)
-  io.socket.get('/player', {
+  io.socket.get('/world', {
     where: {
-      updatedAt: {
-        '>': new Date(((new Date()).getTime() - 15000))
+      name: 'default'
+    }
+  }, function (world, jwr){
+    if (jwr.error) {
+      console.error('Error fetching world (status: %s): ', jwr.statusCode, '\nBody:\n',jwr.error);
+      return;
+    }
+
+    // ...then get its players who've been updated recently
+    // (this also subscribes to subsequent updates)
+    io.socket.get('/player', {
+      where: {
+        world: world.id,
+        updatedAt: {
+          '>': new Date(((new Date()).getTime() - 15000))
+        }
       }
-    }
-  }, function (players, res){
-    if (res.statusCode >= 300 || res.statusCode < 200) {
-      console.error('Error fetching players (status: %s): ', res.statusCode, '\nBody:\n',players);
-      return;
-    }
+    }, function (players, jwr) {
+      if (jwr.error) {
+        console.error('Error fetching players (status: %s): ', jwr.statusCode, '\nBody:\n',jwr.error);
+        return;
+      }
 
-    // Loop through and build each style object
-    // (and cast ids)
-    players = _.map(players, function (eachPlayer){
-      eachPlayer.id = +eachPlayer.id;
-      eachPlayer.style = _getStyle(eachPlayer);
-      return eachPlayer;
+      // Loop through and build each style object
+      // (and cast ids)
+      players = _.map(players, function (eachPlayer){
+        eachPlayer.id = +eachPlayer.id;
+        eachPlayer.style = _getStyle(eachPlayer);
+        return eachPlayer;
+      });
+
+      // Update the DOM
+      $scope.players = players;
+      $scope.$apply();
+
+
+      // Find or create the player for the current user
+      io.socket.post('/player/join', {
+        name: 'Guest_'+(Math.floor(Math.random()*100000))
+      }, function(myPlayer, res) {
+        if (res.statusCode >= 300 || res.statusCode < 200) {
+          console.error('Error creating a player (status: %s): ', res.statusCode, '\nBody:\n',myPlayer);
+          return;
+        }
+
+        // Ensure integer id
+        myPlayer.id = +myPlayer.id;
+
+        // Find player w/ my id on the page (in $scope.players) and point `$scope.myPlayer` at it
+        var myPlayerAlreadyExists = _.find($scope.players, { id: myPlayer.id });
+
+        if (myPlayerAlreadyExists) {
+          $scope.myPlayer = myPlayerAlreadyExists;
+          return;
+        }
+
+        // If it doesn't exist on the page yet, create it
+        $scope.myPlayer = myPlayer;
+        $scope.players.push($scope.myPlayer);
+        return;
+
+      });
     });
-
-    // Update the DOM
-    $scope.players = players;
-    $scope.$apply();
   });
 
 
-  // Immediately create the player for the current user
-  io.socket.post('/player', {
-    name: 'Guest_'+(Math.floor(Math.random()*100000)),
-    x: 0,
-    y: 0,
-    red: (Math.floor(Math.random()*255)),
-    green: (Math.floor(Math.random()*255)),
-    blue: (Math.floor(Math.random()*255))
-  }, function(myPlayer, res) {
-    if (res.statusCode >= 300 || res.statusCode < 200) {
-      console.error('Error creating a player (status: %s): ', res.statusCode, '\nBody:\n',myPlayer);
-      return;
-    }
-
-    // Ensure integer id
-    myPlayer.id = +myPlayer.id;
-
-    // Find player w/ my id on the page (in $scope.players) and point `$scope.myPlayer` at it
-    var myPlayerAlreadyExists = _.find($scope.players, { id: myPlayer.id });
-
-    if (myPlayerAlreadyExists) {
-      $scope.myPlayer = myPlayerAlreadyExists;
-      return;
-    }
-
-    // If it doesn't exist on the page yet, create it
-    $scope.myPlayer = myPlayer;
-    $scope.players.push($scope.myPlayer);
-    return;
-
-  });
 
 
 }]);

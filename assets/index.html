@@ -41,12 +41,12 @@
     <div class="player"
          ng-repeat="player in players"
          ng-style="player.style"
-         ng-mouseenter="player.nameVisible=true"
-         ng-mouseleave="player.nameVisible=false"
+         ng-mouseenter="player.tooltip = player.id==myPlayer.id ? ('Me ('+player.name+')') : player.name"
+         ng-mouseleave="player.tooltip=''"
          >
-      <p ng-if="player.name && player.nameVisible">
+      <p ng-if="player.tooltip">
         <br/>
-        <span>{{player.name}}</span>
+        <span>{{player.tooltip}}</span>
       </p>
     </div>
 

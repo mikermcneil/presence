@@ -28,7 +28,12 @@ module.exports = {
     });
   },
 
-	create: function (req,res) {
+
+
+  /**
+   * Player wants to join the world.
+   */
+	join: function (req,res) {
 
     // This is an existing user-- instead of creating, look up her player.
     if (req.session.me) {
@@ -43,18 +48,20 @@ module.exports = {
     }
 
     // Otherwise this is a new user-- we'll create a player for her.
-    Player.create(req.allParams(), function (err, newPlayer) {
-      if (err) return res.negotiate(err);
+    sails.machines.spawnPlayer({
+      name: req.param('name')
+    }, {
+      error: function (err){
+        return res.negotiate(err);
+      },
+      then: function (newPlayer){
 
-      // Publish an event letting everyone who cares that a new player was created.
-      // (but don't publish it to ourselves- that's why we pass in `req`)
-      Player.publishCreate(newPlayer, req);
+        // Then save her player id in her session
+        req.session.me = newPlayer.id;
 
-      // Then save her player id in her session
-      req.session.me = newPlayer.id;
-
-      // Session is automatically persisted when we respond (just like in Express)
-      return res.json(newPlayer);
+        // Session is automatically persisted when we respond (just like in Express)
+        return res.json(newPlayer);
+      }
     });
 
   }
