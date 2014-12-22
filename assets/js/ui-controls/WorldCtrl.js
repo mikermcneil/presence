@@ -1,6 +1,11 @@
-angular.module('Presence').controller('WorldCtrl', ['$scope', '$timeout', function ($scope, $timeout){
+angular.module('Presence').controller('WorldCtrl', [
 
-
+      '$scope',
+      '$timeout',
+      'negotiateKeyboardEvent',function(
+        $scope,
+        $timeout,
+        negotiateKeyboardEvent) {
 
 
 
@@ -34,19 +39,29 @@ angular.module('Presence').controller('WorldCtrl', ['$scope', '$timeout', functi
   function onRemotePlayerActivity(event){
 
     try {
-
-
-      // Cast id to an integer (just to be safe)
+      // Cast `event.id` to an integer (just to be safe)
       event.data.id = event.data.id || event.id;
       event.data.id = +event.data.id;
       event.id = event.data.id;
+    }
+    catch(e) {
+      console.error('Malformed comet event:',event, '( Error:',e,')');
+      return;
+    }
 
+    try {
       // Merge in event's bundled `previous` data to get access to colors
       event.data.red = event.data.red || event.previous.red;
       event.data.green = event.data.green || event.previous.green;
       event.data.blue = event.data.blue || event.previous.blue;
+    }
+    catch (e){
+      // fail silently if new colors cannot be parsed
+    }
 
-      console.log('Received socket event:',event);
+    console.log('Received socket event:',event);
+
+    try {
 
       switch(event.verb) {
 
@@ -77,8 +92,7 @@ angular.module('Presence').controller('WorldCtrl', ['$scope', '$timeout', functi
           $scope.$apply();
           break;
 
-        default:
-          throw new Error('Unrecognized socket event format');
+        default: throw new Error('Unrecognized socket event verb: '+event.verb);
       }
     }
     catch(e) {
@@ -88,40 +102,82 @@ angular.module('Presence').controller('WorldCtrl', ['$scope', '$timeout', functi
   }
 
 
-  /**
-   * @required x
-   * @required y
-   *
-   * @uses $scope
-   */
-  function onLocalPlayerMovement(options) {
+  // /**
+  //  * @required x
+  //  * @required y
+  //  *
+  //  * @uses $scope
+  //  */
+  // function onLocalPlayerMovement(options) {
 
-    // Temporarily light up own player position for context
-    $scope.myPlayer.moving = true;
+  //   // Temporarily light up own player position for context
+  //   $scope.myPlayer.moving = true;
 
-    // Track current player position
-    $scope.myPlayer.x = options.x;
-    $scope.myPlayer.y = options.y;
+  //   // Track current player position
+  //   $scope.myPlayer.x = options.x;
+  //   $scope.myPlayer.y = options.y;
 
-    // $scope.myPlayer.style = {
-    //   top: ((+e.pageY||0)-6)+'px',
-    //   left: ((+e.pageX||0)-6)+'px'
-    // };
-    // $scope.$apply();
-    // console.log('moving!');
+  //   // $scope.myPlayer.style = {
+  //   //   top: ((+e.pageY||0)-6)+'px',
+  //   //   left: ((+e.pageX||0)-6)+'px'
+  //   // };
+  //   // $scope.$apply();
+  //   // console.log('moving!');
 
-    // Track whether player is moving (for animation)
-    $timeout.cancel($scope.myPlayer.movingTimer);
-    $scope.myPlayer.movingTimer = $timeout(function (){
-      // console.log('stopped!');
-      $scope.myPlayer.moving = false;
-    }, 500);
+  //   // Track whether player is moving (for animation)
+  //   $timeout.cancel($scope.myPlayer.movingTimer);
+  //   $scope.myPlayer.movingTimer = $timeout(function (){
+  //     // console.log('stopped!');
+  //     $scope.myPlayer.moving = false;
+  //   }, 500);
 
-    // Inform other users about our new local player position
-    _syncPlayer($scope.myPlayer);
-  }
+  //   // Inform other users about our new local player position
+  //   _syncPlayer($scope.myPlayer);
+  // }
 
 
+
+
+  // -------------------- //
+  //                      //
+  //   GLOBAL KEYBOARD    //
+  //       EVENTS         //
+  //                      //
+  // -------------------- //---------------------------------------------
+
+
+  // When DOM is ready, bind KB events
+  $(function (){
+    $(document).keydown(function (e){
+      negotiateKeyboardEvent(e, {
+
+        '<UP_ARROW>': function (){
+          Cloud.movePlayer({
+            direction: 0
+          });
+        },
+
+        '<DOWN_ARROW>': function (){
+          Cloud.movePlayer({
+            direction: 180
+          });
+        },
+
+        '<LEFT_ARROW>': function (){
+          Cloud.movePlayer({
+            direction: 270
+          });
+        },
+
+        '<RIGHT_ARROW>': function (){
+          Cloud.movePlayer({
+            direction: 90
+          });
+        },
+
+      });
+    });
+  });
 
 
 
@@ -230,24 +286,22 @@ angular.module('Presence').controller('WorldCtrl', ['$scope', '$timeout', functi
       return;
     }
 
-    // If a player with my id already exists on the page, delete it
-    var myPlayerAlreadyExists = _.find($scope.players, { id: +myPlayer.id });
+    // Ensure integer id
+    myPlayer.id = +myPlayer.id;
+
+    // Find player w/ my id on the page (in $scope.players) and point `$scope.myPlayer` at it
+    var myPlayerAlreadyExists = _.find($scope.players, { id: myPlayer.id });
+
     if (myPlayerAlreadyExists) {
-      _.remove($scope.players, { id: myPlayerAlreadyExists.id });
+      $scope.myPlayer = myPlayerAlreadyExists;
+      return;
     }
 
-    // Save our generated name and id
-    $scope.myPlayer.name = myPlayer.name;
-    $scope.myPlayer.id = myPlayer.id;
+    // If it doesn't exist on the page yet, create it
+    $scope.myPlayer = myPlayer;
+    $scope.players.push($scope.myPlayer);
+    return;
 
-    // Start listening for player movement for the CURRENT USER
-    // and update the server (throttled)
-    $(window).mousemove(_.throttle(function (e){
-      onLocalPlayerMovement({
-        x: (+e.pageX||0),
-        y: (+e.pageY||0)
-      });
-    }, 40));
   });
 
 
@@ -279,20 +333,75 @@ angular.module('Presence').controller('WorldCtrl', ['$scope', '$timeout', functi
 
 
 
-/**
- * [_getStyle description]
- * @param  {[type]} playerObj [description]
- * @return {[type]}           [description]
- */
-function _getStyle(obj) {
-  obj = obj||{};
+// -------------------- //
+//                      //
+//        Cloud         //
+//                      //
+// -------------------- //---------------------------------------------
 
-  return {
-    top: (obj.y||0)+'px',
-    left: (obj.x||0)+'px',
-    'background-color': 'rgba('+obj.red+','+obj.green+','+obj.blue+', 0.6)'
-  };
+
+var Cloud = {
+
+  // •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• ••
+  // Outbound API (communicate w/ endpoints on server)
+  // •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• ••
+
+  movePlayer: function (inputs){
+
+    io.socket.post('/player/move', {
+      direction: inputs.direction
+    }, function(coordinates, jwr) {
+      if (jwr.error) {
+        console.error('Error updating local player position (status: %s): ', jwr.statusCode, '\nBody:\n',jwr.error);
+        return;
+      }
+      console.log('moved, new coordinates are (%s,%s)', coordinates.x, coordinates.y);
+
+      // Refresh player in the DOM
+      _.extend(SCOPE.myPlayer, coordinates);
+      // (Re)build style object
+      SCOPE.myPlayer.style = _getStyle(SCOPE.myPlayer || coordinates);
+      SCOPE.$apply();
+    });
+  },
+
+
+
+  chat: function (msg){
+    io.socket._raw.emit('chat', msg);
+
+    io.socket.post('/chat', {
+      message: msg
+    }, function (data, jwr) {
+      if (jwr.error) {
+        console.error('ERROR:',data);
+        return;
+      }
+
+      console.log('response:',data);
+      return;
+    });
+  },
+
+
+
+  // •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• ••
+  // Inbound API (listen for events server might send)
+  // •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• ••
+
+  when: {
+    assadg: function (event){
+      return mergeDiff(event);
+    }
+  }
+};
+
+// Listen for inbound messages from Sails
+for (var eventName in Cloud.when){
+  io.socket.on(eventName, Cloud.when[eventName]);
 }
+
+
 
 
 /**
@@ -305,10 +414,35 @@ function _syncPlayer(playerData){
     x: playerData.x,
     y: playerData.y,
     chat: playerData.chat
-  }, function(data, res) {
-    if (res.statusCode >= 300 || res.statusCode < 200) {
-      console.error('Error updating local player position (status: %s): ', res.statusCode, '\nBody:\n',data);
+  }, function(data, jwr) {
+    if (jwr.error) {
+      console.error('Error updating local player position (status: %s): ', jwr.statusCode, '\nBody:\n',jwr.error);
       return;
     }
   });
+}
+
+
+
+// -------------------- //
+//                      //
+//         Misc         //
+//                      //
+// -------------------- //---------------------------------------------
+
+
+
+/**
+ * [_getStyle description]
+ * @param  {[type]} playerObj [description]
+ * @return {[type]}           [description]
+ */
+function _getStyle(obj) {
+  obj = obj||{};
+
+  return {
+    top: (obj.y||0)+'px',
+    left: (obj.x||0)+'px',
+    'background-color': 'rgba('+(obj.red||255)+','+(obj.green||255)+','+(obj.blue||255)+', 0.6)'
+  };
 }

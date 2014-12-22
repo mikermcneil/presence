@@ -40,8 +40,11 @@
 
     <div class="player"
          ng-repeat="player in players"
-         ng-style="player.style">
-      <p ng-if="player.name">
+         ng-style="player.style"
+         ng-mouseenter="player.nameVisible=true"
+         ng-mouseleave="player.nameVisible=false"
+         >
+      <p ng-if="player.name && player.nameVisible">
         <br/>
         <span>{{player.name}}</span>
       </p>
