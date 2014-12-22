@@ -1,0 +1,104 @@
+body, html, * {
+  margin: 0;
+  padding: 0;
+}
+body, html {
+  color: white;
+  font-family: 'Courier', monospace;
+  background: #000;
+}
+
+/* container for all the players */
+.player-land {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+
+
+  /* a particular player */
+  .player {
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    border-radius: 15px;
+
+    span {
+      display: inline-block;
+      width: 200px;
+      padding-top: 7px;
+    }
+  }
+
+
+  /* the global player (my player) */
+  player: none;
+  .my-player {
+    position: absolute;
+    z-index: 3;
+
+    display: inline-block;
+    color: #fdfdfd;
+    font-size: 10px;
+
+    transition: transform 0.2s ease, text-shadow 0.2s ease;
+    transform: scaleX(2.5) translateY(4px);
+    text-shadow:
+      0 1px 1px rgba(0,0,0,0.5);
+
+    &.moving {
+      transform: scaleX(2.5);
+      text-shadow:
+        0 2px 2px rgba(255,255,255,0.7),
+        0 10px 4px rgba(0,0,0,0.5);
+    }
+
+  }
+
+
+}
+
+textarea {
+  position:fixed;
+  bottom:0;
+  width: 100%;
+  padding: 5px;
+  text-align: center;
+  height: 50px;
+  padding: 10px;
+  font-size: 18px;
+  border: none;
+  background-color: rgba(255,255,255,0.6);
+  font-family: inherit;
+  &:focus {
+    background-color: rgba(255,255,255,0.9);
+    outline: none;
+  }
+
+  &.saying {
+    // box-shadow: 0 -5px 35px 10px rgba(0,255,255, 0.7);
+    background-color: rgba(255,255,255,1);
+  }
+
+}
+
+.placeholderText() {
+  color: rgba(0,0,0,0.7);
+}
+
+ /* WebKit browsers */
+::-webkit-input-placeholder {
+  .placeholderText();
+}
+/* Mozilla Firefox 4 to 18 */
+:-moz-placeholder {
+  .placeholderText();
+}
+/* Mozilla Firefox 19+ */
+::-moz-placeholder {
+  .placeholderText();
+}
+/* Internet Explorer 10+ */
+:-ms-input-placeholder {
+  .placeholderText();
+}
