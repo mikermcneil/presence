@@ -1,15 +1,11 @@
 module.exports = {
-  friendlyName: 'Move player',
-  description: 'Move a player in a direction',
+  friendlyName: 'Simulate player',
+  description: 'Simulate a moment in a player\'s life, updating position, etc.',
 
   inputs: {
     playerId: {
-      description: 'The unique id of the player to move',
+      description: 'The unique id of the player',
       example: 8238
-    },
-    direction: {
-      description: 'The direction to move',
-      example: 90
     }
   },
 
@@ -20,29 +16,34 @@ module.exports = {
         y: 235
       }
     },
-    badRequest: {},
     error: {},
   },
 
   defaultExit: 'then',
 
-  fn: function createMap(inputs, exits){
+  fn: function (inputs, exits){
 
     Player.findOne(inputs.playerId).exec(function (err, player) {
       if(err) return exits.error(err);
-      var speed = 5;
+
+      // If not moving, just bail out
+      if (!player.moving) return exits.then();
+
+      var direction = player.direction;
+
+      var speed = 1;
       var UNIT_PIXEL = 5;
       var pxIncr = speed*UNIT_PIXEL;
-      switch (inputs.direction){
+      switch (direction){
         case 0:   player.y-=pxIncr; break;
-        case 45:   player.y-=pxIncr; player.x+=pxIncr; break;
+        case 45:   player.y-=(pxIncr/2); player.x+=(pxIncr/2); break;
         case 90:  player.x+=pxIncr; break;
-        case 115:  player.x+=pxIncr; player.y+=pxIncr; break;
+        case 115:  player.x+=(pxIncr/2); player.y+=(pxIncr/2); break;
         case 180: player.y+=pxIncr; break;
-        case 225: player.y+=pxIncr; player.x-=pxIncr; break;
+        case 225: player.y+=(pxIncr/2); player.x-=(pxIncr/2); break;
         case 270: player.x-=pxIncr; break;
-        case 315: player.x-=pxIncr; player.y-=pxIncr; break;
-        default: return exits.badRequest('Unknown direction:'+inputs.direction);
+        case 315: player.x-=(pxIncr/2); player.y-=(pxIncr/2); break;
+        default: return exits.error('Unknown direction:'+direction);
       }
 
       // Enforce world boundaries

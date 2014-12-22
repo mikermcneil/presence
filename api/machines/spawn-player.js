@@ -65,10 +65,12 @@ module.exports = {
         added: newPlayer
       });
 
-      // TODO:
-      // consider figuring out a way to have the other folks
-      // who are subscribed to this world also subscribe to
-      // the new player
+      // Look up all of the subscribers to our world and subscribe them
+      // to the new player.
+      // var subscribers = World.subscribers(inputs.world);
+      // _.each(subscribers, function (worldSubscriber){
+      //   Player.subscribe(worldSubscriber, newPlayer.id);
+      // });
 
       return exits.then(newPlayer);
     });

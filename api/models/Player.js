@@ -16,6 +16,17 @@ module.exports = {
       unique: true
     },
 
+    // e.g. 90
+    direction: {
+      type: 'integer'
+    },
+
+    // e.g. true
+    moving: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
     // Links to the world in which this user currently resides
     world: {
       model: 'World'

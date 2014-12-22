@@ -50,7 +50,7 @@ angular.module('Presence').controller('WorldCtrl', [
             console.log('new player',newPlayer);
 
             // New player doesn't count if WE'RE that player
-            if ($scope.myPlayer && $scope.myPlayer.id === newPlayer.id) {
+            if ($scope.myPlayer && +$scope.myPlayer.id === +newPlayer.id) {
               console.log('nvm its just me');
               return;
             }
@@ -62,11 +62,18 @@ angular.module('Presence').controller('WorldCtrl', [
                 return;
               }
 
-              // Add a new player to the DOM
-              $scope.players.push(newPlayer);
-
               // (Re)build style object
               newPlayer.style = _getStyle(newPlayer);
+
+              // Then we can create the player in the DOM
+              var existingPlayer = _.find($scope.players, { id: +newPlayer.id });
+              if (!existingPlayer) {
+                $scope.players.push(newPlayer);
+              }
+              else {
+                // Player already exists in the DOM, update it
+                existingPlayer = _.extend(existingPlayer, newPlayer);
+              }
 
               // Then refresh the DOM
               $scope.$apply();
@@ -200,33 +207,105 @@ angular.module('Presence').controller('WorldCtrl', [
   // -------------------- //---------------------------------------------
 
 
-  // When DOM is ready, bind KB events
+  // When DOM is ready
   $(function (){
+
+    // Set up a loop which watches the currently pressed keys
+    var arrowKeysPressed = [];
+    setInterval(function examinePressedArrowKeys(){
+
+      //
+      // Stop moving:
+      //
+      if (arrowKeysPressed.length === 0) {
+        Cloud.stopPlayer({
+          direction: direction
+        });
+        return;
+      }
+
+      //
+      // Start moving:
+      //
+
+      var direction;
+      // cardinal directions
+      if (_.contains(arrowKeysPressed, 'up')) {
+        direction = 0;
+      }
+      if (_.contains(arrowKeysPressed, 'left')) {
+        direction = 270;
+      }
+      if (_.contains(arrowKeysPressed, 'down')) {
+        direction = 180;
+      }
+      if (_.contains(arrowKeysPressed, 'right')) {
+        direction = 90;
+      }
+      // NW/SW/SE/NE
+      if (_.contains(arrowKeysPressed, 'up') && _.contains(arrowKeysPressed, 'left')) {
+        direction = 315;
+      }
+      if (_.contains(arrowKeysPressed, 'left') && _.contains(arrowKeysPressed, 'down')) {
+        direction = 225;
+      }
+      if (_.contains(arrowKeysPressed, 'down') && _.contains(arrowKeysPressed, 'right')) {
+        direction = 135;
+      }
+      if (_.contains(arrowKeysPressed, 'right') && _.contains(arrowKeysPressed, 'up')) {
+        direction = 45;
+      }
+
+      Cloud.movePlayer({
+        direction: direction
+      });
+
+    }, 1000/30);
+
+
+    // bind KB events:
+
+    // Press key
     $(document).keydown(function (e){
       negotiateKeyboardEvent(e, {
 
         '<UP_ARROW>': function (){
-          Cloud.movePlayer({
-            direction: 0
-          });
+          arrowKeysPressed = _.union(arrowKeysPressed, ['up']);
         },
 
         '<DOWN_ARROW>': function (){
-          Cloud.movePlayer({
-            direction: 180
-          });
+          arrowKeysPressed = _.union(arrowKeysPressed, ['down']);
         },
 
         '<LEFT_ARROW>': function (){
-          Cloud.movePlayer({
-            direction: 270
-          });
+          arrowKeysPressed = _.union(arrowKeysPressed, ['left']);
         },
 
         '<RIGHT_ARROW>': function (){
-          Cloud.movePlayer({
-            direction: 90
-          });
+          arrowKeysPressed = _.union(arrowKeysPressed, ['right']);
+        },
+
+      });
+    });
+
+    // Release key
+    $(document).keyup(function (e){
+      negotiateKeyboardEvent(e, {
+
+        '<UP_ARROW>': function (){
+          arrowKeysPressed = _.difference(arrowKeysPressed, ['up']);
+        },
+
+        '<DOWN_ARROW>': function (){
+          arrowKeysPressed = _.difference(arrowKeysPressed, ['down']);
+        },
+
+        '<LEFT_ARROW>': function (){
+          arrowKeysPressed = _.difference(arrowKeysPressed, ['left']);
+        },
+
+        '<RIGHT_ARROW>': function (){
+          arrowKeysPressed = _.difference(arrowKeysPressed, ['right']);
         },
 
       });
@@ -405,6 +484,15 @@ angular.module('Presence').controller('WorldCtrl', [
       }, cb);
     },
 
+    stopPlayer: function (inputs) {
+      io.socket.post('/player/stopMoving', function(unused, jwr) {
+        if (jwr.error) {
+          console.error('Error updating local player position (status: %s): ', jwr.statusCode, '\nBody:\n',jwr.error);
+          return;
+        }
+      });
+    },
+
     movePlayer: function (inputs){
 
       io.socket.post('/player/move', {
@@ -414,13 +502,13 @@ angular.module('Presence').controller('WorldCtrl', [
           console.error('Error updating local player position (status: %s): ', jwr.statusCode, '\nBody:\n',jwr.error);
           return;
         }
-        console.log('moved, new coordinates are (%s,%s)', coordinates.x, coordinates.y);
+        // console.log('moved, new coordinates are (%s,%s)', coordinates.x, coordinates.y);
 
-        // Refresh player in the DOM
-        _.extend(SCOPE.myPlayer, coordinates);
-        // (Re)build style object
-        SCOPE.myPlayer.style = _getStyle(SCOPE.myPlayer || coordinates);
-        SCOPE.$apply();
+        // // Refresh player in the DOM
+        // _.extend(SCOPE.myPlayer, coordinates);
+        // // (Re)build style object
+        // SCOPE.myPlayer.style = _getStyle(SCOPE.myPlayer || coordinates);
+        // SCOPE.$apply();
       });
     },
 

@@ -15,19 +15,37 @@ module.exports = {
       return res.forbidden('No user session.');
     }
 
-    sails.machines.movePlayer({
-      playerId: req.session.me,
-      direction: req.param('direction')
-    }, {
-      error: function (err){
-        return res.negotiate(err);
-      },
-      badRequest: function (err){
-        return res.badRequest(err);
-      },
-      then: function (coordinates){
-        return res.send(coordinates);
-      }
+    req.validate({
+      direction: 'integer'
+    });
+
+    // TODO: "time out" movements by setting a "startedMovingAt" attr (or something like that)
+
+    // Set direction
+    Player.update(req.session.me, {
+      direction: req.param('direction'),
+      moving: true
+    }, function (err){
+      if (err) return res.negotiate(err);
+      return res.ok();
+    });
+  },
+
+
+  /**
+   * Player wants to stop moving
+   */
+  stopMoving: function (req, res) {
+    if (!req.session.me) {
+      return res.forbidden('No user session.');
+    }
+
+    // Set direction
+    Player.update(req.session.me, {
+      moving: false
+    }, function (err){
+      if (err) return res.negotiate(err);
+      return res.ok();
     });
   },
 
