@@ -75,62 +75,107 @@ module.exports = {
           default: return next('Unknown direction:'+direction);
         }
 
+
+        // TODO: Don't just shove these values in here
+        var PLAYER_WIDTH = 30;
+        var PLAYER_HEIGHT = 30;
+        player.width = PLAYER_WIDTH;
+        player.height = PLAYER_HEIGHT;
+
+        // Calculate player's bounding box
+        var playerBox = getBoundingBox(player.x,player.y,player.width, player.height);
+
+
         // Enforce world boundaries
         var WORLD_WIDTH = sails.config.world.width;
         var WORLD_HEIGHT = sails.config.world.height;
+        // TODO: allow worlds to have variable dimensions
 
-        var PLAYER_WIDTH = 30;
-        var PLAYER_HEIGHT = 30;
-
-        if (player.x+PLAYER_WIDTH > WORLD_WIDTH) {
+        if (playerBox.right > WORLD_WIDTH) {
           player.x = WORLD_WIDTH - PLAYER_WIDTH;
         }
-        if (player.x < 0) {
+        if (playerBox.left < 0) {
           player.x = 0;
         }
-        if (player.y+PLAYER_HEIGHT > WORLD_HEIGHT) {
+        if (playerBox.bottom > WORLD_HEIGHT) {
           player.y = WORLD_HEIGHT - PLAYER_HEIGHT;
         }
-        if (player.y < 0) {
+        if (playerBox.top < 0) {
           player.y = 0;
         }
 
+
         // Collisions w/ other players
-        // TODO
+        _.each(players, function (otherPlayer){
+          // Can't collide w/ yourself
+          if (otherPlayer.id === player.id) return;
 
-        // ---OOO
-        // ---OOO
+          // TODO: Don't just shove these values in here
+          otherPlayer.width = PLAYER_WIDTH;
+          otherPlayer.height = PLAYER_HEIGHT;
 
-        // OOO---
-        // OOO---
+          // Calculate other player's bounding box
+          var otherPlayerBox = getBoundingBox(otherPlayer.x,otherPlayer.y, otherPlayer.width, otherPlayer.height);
 
-        // OOO
-        // OOO
-        // ---
-        // ---
+          // Check for a collision
+          var hasCollision = (function (){
 
-        // ---
-        // ---
-        // OOO
-        // OOO
 
-        // _.each(players, function (otherPlayer){
-        //   // Can't collide w/ yourself
-        //   if (otherPlayer.id === player.id) return;
+            //     ->|
+            // {YOU}THEM
+            if (playerBox.right > otherPlayerBox.left) {
 
-        //   if (player.x+PLAYER_WIDTH > otherPlayer.x + PLAYER_WIDTH) {
-        //     player.x = WORLD_WIDTH - PLAYER_WIDTH;
-        //   }
-        //   if (player.x < otherPlayer.x + PLAYER_WIDTH) {
-        //     player.x = otherPlayer.x + PLAYER_WIDTH;
-        //   }
-        //   if (player.y+PLAYER_HEIGHT > WORLD_HEIGHT) {
-        //     player.y = WORLD_HEIGHT - PLAYER_HEIGHT;
-        //   }
-        //   if (player.y < otherPlayer.y + PLAYER_HEIGHT) {
-        //     player.y = otherPlayer.y + PLAYER_HEIGHT;
-        //   }
-        // });
+              //   |<-
+              // THEM{YOU}
+              if (playerBox.left < otherPlayerBox.right) {
+
+                // THEM
+                // {YOU}
+                if (playerBox.top < otherPlayerBox.bottom) {
+
+                  // {YOU}
+                  // THEM
+                  if (playerBox.bottom > otherPlayerBox.top) {
+                    return true;
+                  }
+                }
+              }
+            }
+          })();
+
+          // IF a collision occurred, just log for now
+          if (hasCollision) {
+            console.log('HAS COLLISION');
+            // TODO: something better
+          }
+
+
+
+          // /////////
+
+          // // {YOU}THEM
+          // if (playerBox.right > otherPlayerBox.left) {
+          //   player.x = otherPlayerBox.left - player.width;
+          // }
+
+          // // THEM{YOU}
+          // if (playerBox.left < otherPlayerBox.right) {
+          //   player.x = otherPlayerBox.right;
+          // }
+
+          // // THEM
+          // // {YOU}
+          // if (playerBox.top < otherPlayerBox.bottom) {
+          //   player.y = otherPlayerBox.bottom;
+          // }
+
+          // // {YOU}
+          // // THEM
+          // if (playerBox.bottom > otherPlayerBox.top) {
+          //   player.y = otherPlayerBox.top;
+          // }
+
+        });
 
         player.save(function (err){
           if (err) return next(err);
@@ -152,3 +197,15 @@ module.exports = {
 
   }
 };
+
+
+
+// Calculate player's bounding box
+function getBoundingBox(x,y,width,height){
+  return {
+    top    : y,
+    right  : x+width,
+    bottom : y+height,
+    left   : x
+  };
+}
