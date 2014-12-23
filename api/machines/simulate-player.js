@@ -38,7 +38,7 @@ module.exports = {
         case 0:   player.y-=pxIncr; break;
         case 45:   player.y-=(pxIncr/2); player.x+=(pxIncr/2); break;
         case 90:  player.x+=pxIncr; break;
-        case 115:  player.x+=(pxIncr/2); player.y+=(pxIncr/2); break;
+        case 135:  player.x+=(pxIncr/2); player.y+=(pxIncr/2); break;
         case 180: player.y+=pxIncr; break;
         case 225: player.y+=(pxIncr/2); player.x-=(pxIncr/2); break;
         case 270: player.x-=pxIncr; break;

@@ -163,41 +163,6 @@ angular.module('Presence').controller('WorldCtrl', [
   }
 
 
-  // /**
-  //  * @required x
-  //  * @required y
-  //  *
-  //  * @uses $scope
-  //  */
-  // function onLocalPlayerMovement(options) {
-
-  //   // Temporarily light up own player position for context
-  //   $scope.myPlayer.moving = true;
-
-  //   // Track current player position
-  //   $scope.myPlayer.x = options.x;
-  //   $scope.myPlayer.y = options.y;
-
-  //   // $scope.myPlayer.style = {
-  //   //   top: ((+e.pageY||0)-6)+'px',
-  //   //   left: ((+e.pageX||0)-6)+'px'
-  //   // };
-  //   // $scope.$apply();
-  //   // console.log('moving!');
-
-  //   // Track whether player is moving (for animation)
-  //   $timeout.cancel($scope.myPlayer.movingTimer);
-  //   $scope.myPlayer.movingTimer = $timeout(function (){
-  //     // console.log('stopped!');
-  //     $scope.myPlayer.moving = false;
-  //   }, 500);
-
-  //   // Inform other users about our new local player position
-  //   _syncPlayer($scope.myPlayer);
-  // }
-
-
-
 
   // -------------------- //
   //                      //
