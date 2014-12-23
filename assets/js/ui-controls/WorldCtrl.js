@@ -22,16 +22,6 @@ angular.module('Presence').controller('WorldCtrl', [
   //--------------//------------------------------------------------------------//
 
 
-  // Type in chat box
-  $scope.typeInChatBox = function (e){
-    _syncPlayer($scope.myPlayer);
-    // if (e.which === 13) {
-    //   $scope.myPlayer.chat
-    // }
-  };
-
-
-
   function onWorldEvent(event) {
     switch(event.verb) {
 
@@ -108,7 +98,7 @@ angular.module('Presence').controller('WorldCtrl', [
       // fail silently if new colors cannot be parsed
     }
 
-    console.log('Received socket event:',event);
+    // console.log('Received socket event:',event);
 
     try {
 
@@ -452,7 +442,7 @@ angular.module('Presence').controller('WorldCtrl', [
     stopPlayer: function (inputs) {
       io.socket.post('/player/stopMoving', function(unused, jwr) {
         if (jwr.error) {
-          console.error('Error updating local player position (status: %s): ', jwr.statusCode, '\nBody:\n',jwr.error);
+          console.error('Error stopping player (status: %s): ', jwr.statusCode, '\nBody:\n',jwr.error);
           return;
         }
       });
@@ -464,7 +454,7 @@ angular.module('Presence').controller('WorldCtrl', [
         direction: inputs.direction
       }, function(coordinates, jwr) {
         if (jwr.error) {
-          console.error('Error updating local player position (status: %s): ', jwr.statusCode, '\nBody:\n',jwr.error);
+          console.error('Error moving player (status: %s): ', jwr.statusCode, '\nBody:\n',jwr.error);
           return;
         }
         // console.log('moved, new coordinates are (%s,%s)', coordinates.x, coordinates.y);
