@@ -165,9 +165,15 @@ angular.module('Presence').controller('WorldCtrl', [
   // When DOM is ready
   $(function (){
 
+    // Dirty checking
+    var dirty;
+
     // Set up a loop which watches the currently pressed keys
     var arrowKeysPressed = [];
     setInterval(function examinePressedArrowKeys(){
+
+      if (!dirty) return;
+      dirty = false;
 
       //
       // Stop moving:
@@ -225,18 +231,22 @@ angular.module('Presence').controller('WorldCtrl', [
       negotiateKeyboardEvent(e, {
 
         '<UP_ARROW>': function (){
+          dirty = true;
           arrowKeysPressed = _.union(arrowKeysPressed, ['up']);
         },
 
         '<DOWN_ARROW>': function (){
+          dirty = true;
           arrowKeysPressed = _.union(arrowKeysPressed, ['down']);
         },
 
         '<LEFT_ARROW>': function (){
+          dirty = true;
           arrowKeysPressed = _.union(arrowKeysPressed, ['left']);
         },
 
         '<RIGHT_ARROW>': function (){
+          dirty = true;
           arrowKeysPressed = _.union(arrowKeysPressed, ['right']);
         },
 
@@ -248,18 +258,22 @@ angular.module('Presence').controller('WorldCtrl', [
       negotiateKeyboardEvent(e, {
 
         '<UP_ARROW>': function (){
+          dirty = true;
           arrowKeysPressed = _.difference(arrowKeysPressed, ['up']);
         },
 
         '<DOWN_ARROW>': function (){
+          dirty = true;
           arrowKeysPressed = _.difference(arrowKeysPressed, ['down']);
         },
 
         '<LEFT_ARROW>': function (){
+          dirty = true;
           arrowKeysPressed = _.difference(arrowKeysPressed, ['left']);
         },
 
         '<RIGHT_ARROW>': function (){
+          dirty = true;
           arrowKeysPressed = _.difference(arrowKeysPressed, ['right']);
         },
 

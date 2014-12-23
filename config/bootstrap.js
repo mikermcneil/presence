@@ -15,40 +15,32 @@ module.exports.bootstrap = function(cb) {
   World.findOrCreate({
     name: 'default'
   }, {
-    name: 'default'
+    name: 'default',
+    width: 800,
+    height: 600
   }).exec(function (err, defaultWorld){
     if (err) {
       sails.log.error('failed to create initial `default` world.');
       return cb(err);
     }
 
-
     // Start the play loop for the default world
     setInterval(function playLoop(){
 
-      Player.find({
-        world: defaultWorld.id
-      }).exec(function (err, players){
-        if (err){
-          sails.log.error('Error looking up players in default world:',err);
-          return;
+      sails.machines.simulateRegion({
+        world: defaultWorld.id,
+        x: 0,
+        y: 0,
+        width: defaultWorld.width,
+        height: defaultWorld.height
+      }, {
+        error: function (err){
+          sails.log.error('Error simulating region in default world (#%d):',world.id, err);
+          // This frame of the play loop ended w/ an error.
+        },
+        then: function (coordinates){
+          // Successfully completed this frame of the play loop.
         }
-
-        async.each(players, function (player, next){
-          sails.machines.simulatePlayer({
-            playerId: player.id
-          }, {
-            error: function (err){
-              sails.log.error('Error simulating player %d:',player.id, err);
-              return next();
-            },
-            then: function (coordinates){
-              return next();
-            }
-          });
-        }, function (){
-          // Done w/ this step of the play loop.
-        });
       });
     }, 1000/30);
 
