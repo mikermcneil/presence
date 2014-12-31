@@ -22,6 +22,11 @@
 
 module.exports.routes = {
 
+  // '/*': function (req, res, next){
+  //   console.log('* * * Received %s request to %s', req.isSocket?'socket.io':'http', req.url);
+  //   next();
+  // }
+
   /***************************************************************************
   *                                                                          *
   * Make the view located at `views/homepage.ejs` (or `views/homepage.jade`, *

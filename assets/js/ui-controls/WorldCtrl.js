@@ -179,6 +179,10 @@ angular.module('Presence').controller('WorldCtrl', [
       // Stop moving:
       //
       if (arrowKeysPressed.length === 0) {
+
+        // Don't try to start moving if we don't have a player yet.
+        if (!$scope.myPlayer || !$scope.myPlayer.id) return;
+
         Cloud.stopPlayer({
           direction: direction
         });
@@ -216,6 +220,9 @@ angular.module('Presence').controller('WorldCtrl', [
       if (_.contains(arrowKeysPressed, 'right') && _.contains(arrowKeysPressed, 'up')) {
         direction = 45;
       }
+
+      // Don't try and move the player if the player has not joined yet.
+      if (!$scope.myPlayer || !$scope.myPlayer.id) return;
 
       Cloud.movePlayer({
         direction: direction

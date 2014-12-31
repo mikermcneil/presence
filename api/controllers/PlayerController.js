@@ -7,12 +7,16 @@
 
 module.exports = {
 
+  test: function (req, res) {
+    return res.json(req.session);
+  },
+
   /**
    * Player wants to move a particular direction
    */
   move: function (req, res) {
     if (!req.session.me) {
-      return res.forbidden('No user session.');
+      return res.forbidden('req.session.me is falsy.');
     }
 
     req.validate({
@@ -37,7 +41,7 @@ module.exports = {
    */
   stopMoving: function (req, res) {
     if (!req.session.me) {
-      return res.forbidden('No user session.');
+      return res.forbidden('req.session.me is falsy.');
     }
 
     // Set direction
@@ -92,11 +96,25 @@ module.exports = {
 
             // Then save her player id in her session
             req.session.me = newPlayer.id;
+            req.session.save(function (err){
+              if (err) return res.negotiate(err);
 
-            sails.log('Saved %d in session', newPlayer.id);
+              sails.log('Saved as player %d in session', newPlayer.id);
 
-            // Session is automatically persisted when we respond (just like in Express)
-            return res.json(newPlayer);
+              // Publish an event letting everyone who cares that a new player was created.
+              // (if we didn't want to publish it to ourselves, we could have passed in `req`)
+              // World.publishAdd(inputs.world, 'players');
+              World.message(world.id, {
+                id: world.id,
+                verb: 'addedTo',
+                attribute: 'players',
+                added: newPlayer
+              });
+
+              // Session is automatically persisted when we respond (just like in Express)
+              return res.json(newPlayer);
+            });
+
           }
         });
       }

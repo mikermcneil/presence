@@ -55,16 +55,6 @@ module.exports = {
         return exits.error(err);
       }
 
-      // Publish an event letting everyone who cares that a new player was created.
-      // (if we didn't want to publish it to ourselves, we could have passed in `req`)
-      // World.publishAdd(inputs.world, 'players');
-      World.message(inputs.world, {
-        id: inputs.world,
-        verb: 'addedTo',
-        attribute: 'players',
-        added: newPlayer
-      });
-
       // Look up all of the subscribers to our world and subscribe them
       // to the new player.
       // var subscribers = World.subscribers(inputs.world);
